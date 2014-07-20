@@ -9,10 +9,15 @@ import java.util.Queue;
 
 public class Function {
     
+	private final String[] OPERATORS = {"+","-","*","/","%","^","E","log","sin","cos","tan","asin","acos","atan"};
     private Map<String, int[]> OPERATOR_INFO = new HashMap<String, int[]>();
-    private final String[] OPERATORS = {"+","-","*","/","%","^","E","log","sin","cos","tan","asin","acos","atan"};
-    private final char[] PARENS = {'(', ')'};
-    private final char[] VARIABLES = {'x'};
+    
+    
+    
+    private static final char[] PARENS = {'(', ')'};
+    
+    
+    
     private final String[] CONSTANTS = {"e","pi"};
     private Map<String, Double> CONSTANT_VALUES = new HashMap<String, Double>();
     
@@ -38,7 +43,7 @@ public class Function {
         OPERATOR_INFO.put("/", new int[]{1, BINARY_LEFT});
         OPERATOR_INFO.put("%", new int[]{1, BINARY_LEFT});
         OPERATOR_INFO.put("^", new int[]{2, BINARY_RIGHT});
-        OPERATOR_INFO.put("^", new int[]{4, BINARY_RIGHT});
+        OPERATOR_INFO.put("E", new int[]{4, BINARY_RIGHT});
         OPERATOR_INFO.put("log", new int[]{3, UNARY_RIGHT});
         OPERATOR_INFO.put("sin", new int[]{3, UNARY_RIGHT});
         OPERATOR_INFO.put("cos", new int[]{3, UNARY_RIGHT});
@@ -62,20 +67,7 @@ public class Function {
         
         this.functionString = functionString;
         
-        postfixFunction = parseSymbolQueue();
-    }
-    
-    
-    /**
-     * Constructor with an option to specify a list of variables being used in the function.
-     * 
-     * TODO: Implement multiple variables in the function.
-     * 
-     * @param functionString - A <code>String</code> representing the mathematical function.
-     * @param variables - The list of variables in the function.
-     */
-    public Function(String functionString, char[] variables) {
-        
+        postfixFunction = shuntingYard(parseFunction());
     }
     
     
@@ -90,18 +82,15 @@ public class Function {
     
     
     /**
-     * Parses the infix mathematical string into a queue of tokens in postfix notation.
-     * @return The queue of tokens.
+     * P
+     * @return
      * @throws FunctionFormatException
      */
-    private Queue<Token> parseSymbolQueue() throws FunctionFormatException {
-        
-        Queue<Token> outQueue = new LinkedList<Token>();
-        Deque<Token> opStack = new LinkedList<Token>();
-        
-        
-        int i = 0;
-        while (i < functionString.length()) {
+    private Queue<Token> parseFunction() throws FunctionFormatException {
+    	Queue<Token> functionQueue = new LinkedList<Token>();
+    	
+    	int i = 0;
+    	while (i < functionString.length()) {
 
             char ch = functionString.charAt(i);
             
@@ -113,40 +102,58 @@ public class Function {
             
             // Parse the token.
             Token token = parseToken(i);
+            functionQueue.add(token);
             i += token.getValue().length();
+    	}
+    	
+    	return functionQueue;
+    }
+    
+      
+    /**
+     * Converts the queue of infix tokens to a queue of postfix tokens,
+     * using the shunting-yard algorithm
+     * @return The queue of tokens.
+     * @throws FunctionFormatException
+     */
+    private Queue<Token> shuntingYard(Queue<Token> functionQueue) throws FunctionFormatException {
+        
+        Queue<Token> outQueue = new LinkedList<Token>();
+        Deque<Token> opStack = new LinkedList<Token>();
+               
+        while (functionQueue.size() > 0) {
+        	
+        	Token token = functionQueue.remove();
             
-            // Shunting-yard algorithm.
+        	// Token is a number or constant.
             if (token.getType() == Token.NUMBER || token.getType() == Token.CONSTANT) {
                 outQueue.add(token);
+                
+                // Check if the next token in the queue is an operator with a unary right
+                // associativity or a variable. If so, add an extra multiplication token
+                // before it.
+                if (functionQueue.size() > 0 && ((functionQueue.peek().getType() == Token.OPERATOR && OPERATOR_INFO.get(functionQueue.peek().getValue())[1] == UNARY_RIGHT) || functionQueue.peek().getType() == Token.VARIABLE)) {
+                	Token multiplicationToken = new Token(Token.OPERATOR, "*");
+                    pushOperator(multiplicationToken, outQueue, opStack);
+                }
+                
+            // Token is a variable.
             } else if (token.getType() == Token.VARIABLE) {
-               /* if (outQueue.size() > 0 && outQueue.peek().getType() == Token.NUMBER) {
-                    // Create a new multiplication symbol.
-                    Token multiplicationToken = new Token(Token.OPERATOR, "*");
-                    while (opStack.size() != 0 && !opStack.peek().getValue().equals("(") &&
-                            ((OPERATOR_INFO.get(multiplicationToken.getValue())[1] == BINARY_LEFT && OPERATOR_INFO.get(multiplicationToken.getValue())[0] <= OPERATOR_INFO.get(opStack.peek().getValue())[0]) 
-                            || OPERATOR_INFO.get(multiplicationToken.getValue())[0] < OPERATOR_INFO.get(opStack.peek().getValue())[0]))
-                        outQueue.add(opStack.pop());
-                    opStack.push(multiplicationToken);
-                }*/
                 outQueue.add(token);
+            
+            // Token is a parenthesis.
             } else if (token.getType() == Token.PAREN) {
                 if (token.getValue().equals("(")) {
                     opStack.push(token);
                 } else {
-                    while (true) {
-                        Token poppedToken = opStack.pop();
-                        if (poppedToken.getValue().equals("("))
-                            break;
-                        else
-                            outQueue.add(poppedToken);
-                    }
-                }   
+                	Token poppedToken;
+                    while (!(poppedToken = opStack.pop()).getValue().equals("("))
+                        outQueue.add(poppedToken);
+                }
+                
+            // Token is an operator.
             } else {
-                while (opStack.size() != 0 && !opStack.peek().getValue().equals("(") &&
-                        ((OPERATOR_INFO.get(token.getValue())[1] == BINARY_LEFT && OPERATOR_INFO.get(token.getValue())[0] <= OPERATOR_INFO.get(opStack.peek().getValue())[0]) 
-                        || OPERATOR_INFO.get(token.getValue())[0] < OPERATOR_INFO.get(opStack.peek().getValue())[0]))
-                    outQueue.add(opStack.pop());
-                opStack.push(token);
+                pushOperator(token, outQueue, opStack);
             }
         }
         
@@ -158,9 +165,25 @@ public class Function {
     }
     
     
+    
+    private void pushOperator(Token token, Queue<Token> outQueue, Deque<Token> opStack) {
+    	while (opStack.size() != 0 && !opStack.peek().getValue().equals("(") &&
+                ((OPERATOR_INFO.get(token.getValue())[1] == BINARY_LEFT 
+                && OPERATOR_INFO.get(token.getValue())[0] 
+                		<= OPERATOR_INFO.get(opStack.peek().getValue())[0]) 
+                || OPERATOR_INFO.get(token.getValue())[0] 
+                		< OPERATOR_INFO.get(opStack.peek().getValue())[0]))
+            outQueue.add(opStack.pop());
+    	opStack.push(token);
+    }
+    
+    
     /**
      * Evaluates this function for the given value of x.
+     * Assumes there is only one variables in the function.
+     * 
      * @param x - Value at which to evaluate the function.
+     * 
      * @return The value of the function at the given value of x.
      * @throws FunctionFormatException
      */
@@ -174,6 +197,41 @@ public class Function {
                 valueStack.push(Double.parseDouble(token.getValue()));
             } else if (token.getType() == Token.VARIABLE) {
                 valueStack.push(x);
+            } else if (token.getType() == Token.CONSTANT){
+                valueStack.push(CONSTANT_VALUES.get(token.getValue()));
+            } else {
+                if (OPERATOR_INFO.get(token.getValue())[1] == UNARY_RIGHT) {
+                    double num = valueStack.pop();
+                    valueStack.push(doOperation(token, num));
+                } else {
+                    double rightNum = valueStack.pop();
+                    double leftNum = valueStack.pop();
+                    valueStack.push(doOperation(token, leftNum, rightNum));
+                }
+            }
+        }
+
+        return valueStack.pop();
+    }
+    
+    
+    
+    /**
+     * Evaluates this function for the given value of x.
+     * @param x - Value at which to evaluate the function.
+     * @return The value of the function at the given value of x.
+     * @throws FunctionFormatException
+     */
+    public double evaluate(HashMap<Character, Double> variables) throws FunctionFormatException {
+        Deque<Double> valueStack = new LinkedList<Double>();
+        
+        while (postfixFunction.size() > 0) {
+            Token token = postfixFunction.remove();
+            
+            if (token.getType() == Token.NUMBER) {
+                valueStack.push(Double.parseDouble(token.getValue()));
+            } else if (token.getType() == Token.VARIABLE) {
+                valueStack.push(variables.get(token.getValue().charAt(0)));
             } else if (token.getType() == Token.CONSTANT){
                 valueStack.push(CONSTANT_VALUES.get(token.getValue()));
             } else {
@@ -211,6 +269,12 @@ public class Function {
             return Math.cos(num);
         else if (operatorValue.equals("tan"))
             return Math.tan(num);
+        else if (operatorValue.equals("asin"))
+            return Math.asin(num);
+        else if (operatorValue.equals("acos"))
+            return Math.acos(num);
+        else if (operatorValue.equals("atan"))
+            return Math.atan(num);
         
         throw new FunctionFormatException("Something bad happened!");
     }
@@ -241,6 +305,8 @@ public class Function {
             return Math.pow(leftNum, rightNum);
         else if (operatorValue.equals("%"))
             return leftNum % rightNum;
+        else if (operatorValue.equals("E"))
+            return leftNum * Math.pow(10, rightNum);
         
         throw new FunctionFormatException("Something bad happened!");
     }
@@ -264,16 +330,9 @@ public class Function {
             while (i < functionString.length() && isNumber(functionString.charAt(i)))
                 i++;
             
-            String numberStr = functionString.substring(start, i);
-            return new Token(Token.NUMBER, numberStr);
+            return new Token(Token.NUMBER, functionString.substring(start, i));
         }
-        
-        // Check for variables.
-        for (int j = 0; j < VARIABLES.length; j++) {
-            if (ch == VARIABLES[j])
-                return new Token(Token.VARIABLE, String.valueOf(VARIABLES[j]));
-        }
-        
+               
         // Check for parentheses.
         for (int j = 0; j < PARENS.length; j++) {
             if (ch == PARENS[j])
@@ -291,6 +350,11 @@ public class Function {
             if (functionString.indexOf(OPERATORS[j], i) == i)
                 return new Token(Token.OPERATOR, OPERATORS[j]);
         }
+                
+        // Check for variables.
+        // Assumes any letter that was not part of an operator is a variable in the function.
+        if (isLetter(ch))
+        	return new Token(Token.VARIABLE, String.valueOf(ch));
         
         // Throw an exception if this character matches nothing.
         throw new FunctionFormatException("Unknown symbol at " + functionString + "[" + i + "].");       
@@ -306,70 +370,18 @@ public class Function {
         if ((ch >= '0' && ch <= '9') || ch == '.')
             return true;
         return false;
-    }    
-
+    }
+    
     
     /**
-     * Represents a mathematical token, one of:
-     * <ul>
-     * <li>Number</li>
-     * <li>Variable</li>
-     * <li>Operator</li>
-     * <li>Parenthesis</li>
-     * <li>Constant</li>
-     * </ul>
-     * @author Adam Heins
-     *
+     * Checks if a character is a letter.
+     * @param ch - Character to check.
+     * @return True if the character is a letter, false otherwise.
      */
-    class Token {
-        
-    	/**
-    	 * Constants for the different types of tokens.
-    	 */
-        public static final int NUMBER = 0;
-        public static final int VARIABLE = 1;
-        public static final int OPERATOR = 2;
-        public static final int PAREN = 3;
-        public static final int CONSTANT = 4;
-        
-        /**
-         * The type of token.
-         */
-        private int type;
-        
-        /**
-         * The value of the operator.
-         */
-        private String value;
-        
-        
-        /**
-         * Constructor.
-         * @param type - The type of the token.
-         * @param value - The value of the token.
-         */
-        public Token(int type, String value) {
-            this.type = type;
-            this.value = value;
-        }
-        
-        
-        /**
-         * Get the type of token.
-         * @return The type of this token.
-         */
-        public int getType() {
-            return type;
-        }
-        
-        
-        /**
-         * Get the value of the token.
-         * @return The value of this token.
-         */
-        public String getValue() {
-            return value;
-        }
+    private boolean isLetter(char ch) {
+    	if ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'))
+    		return true;
+    	return false;
     }
     
     
@@ -379,8 +391,8 @@ public class Function {
      */
     public static void main(String args[]) {
         try {
-            Function function = new Function("e^6");
-            System.out.println(function.evaluate(2));
+            Function function = new Function("3sinpi");
+            System.out.println(function.evaluate(0));
         } catch (FunctionFormatException e) {
             e.printStackTrace();
         }
