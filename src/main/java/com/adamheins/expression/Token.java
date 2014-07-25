@@ -11,7 +11,7 @@
  * @author Adam Heins
  */
 
-package com.adamheins.function;
+package com.adamheins.expression;
 
 
 class Token {
@@ -25,14 +25,10 @@ class Token {
     public static final int PAREN = 3;
     public static final int CONSTANT = 4;
     
-    /**
-     * The type of token.
-     */
+    /** The type of token. */
     private int type;
     
-    /**
-     * The value of the operator.
-     */
+    /** The value of the operator. */
     private String value;
     
     
