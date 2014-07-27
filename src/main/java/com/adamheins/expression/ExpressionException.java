@@ -1,6 +1,12 @@
-package com.adamheins.expression;
+package main.java.com.adamheins.expression;
 
 
+/**
+ * Thrown when there is an error in either syntax or math in an expression.
+ * 
+ * @author Adam Heins
+ *
+ */
 public class ExpressionException extends Exception {
 	
 	// Serial Version UID

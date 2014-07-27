@@ -11,14 +11,18 @@
  * @author Adam Heins
  */
 
-package com.adamheins.expression;
+package main.java.com.adamheins.expression;
 
 
-class Token {
+/**
+ * A math token.
+ * 
+ * @author Adam
+ *
+ */
+public class Token {
     
-	/**
-	 * Constants for the different types of tokens.
-	 */
+	// Constants for different types of Tokens.
     public static final int NUMBER = 0;
     public static final int VARIABLE = 1;
     public static final int OPERATOR = 2;
@@ -34,6 +38,7 @@ class Token {
     
     /**
      * Constructor.
+     * 
      * @param type - The type of the token.
      * @param value - The value of the token.
      */
@@ -45,6 +50,7 @@ class Token {
     
     /**
      * Get the type of token.
+     * 
      * @return The type of this token.
      */
     public int getType() {
@@ -54,6 +60,7 @@ class Token {
     
     /**
      * Get the value of the token.
+     * 
      * @return The value of this token.
      */
     public String getValue() {

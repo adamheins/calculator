@@ -18,6 +18,12 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+/**
+ * GUI for a calculator that evaluates string of math.
+ * 
+ * @author Adam Heins
+ *
+ */
 public class Calculator extends Application {
 
 	/** Field where mathematical expressions are entered. */
@@ -38,6 +44,7 @@ public class Calculator extends Application {
 		// Set up the field where expressions are entered.
 		entryField = new TextField();
 		entryField.setPromptText("Math goes here.");
+		entryField.setStyle("-fx-prompt-text-fill:darkgray;");
 		entryField.setOnKeyPressed(new EventHandler<KeyEvent>(){
 
 			public void handle(KeyEvent e) {
@@ -48,7 +55,7 @@ public class Calculator extends Application {
 		
 		// Set up the field where the result is displayed.
 		resultField = new TextField();
-		resultField.setEditable(false);
+		resultField.setEditable(false);	
 		
 		// Set up the button to evaluate the entered expression.
 		evaluateButton = new Button("=");
@@ -72,11 +79,13 @@ public class Calculator extends Application {
 		root.getChildren().add(entryField);
 		root.getChildren().add(resultBox);
 		
+		Scene scene = new Scene(root);		
+		
 		// Set up the stage.
 		stage.setTitle("Calculator");
 		stage.initStyle(StageStyle.UTILITY);
 		stage.setResizable(false);
-		stage.setScene(new Scene(root));
+		stage.setScene(scene);
 		
 		stage.show();
 	}
