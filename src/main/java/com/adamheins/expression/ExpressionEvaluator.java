@@ -1,11 +1,14 @@
-package main.java.com.adamheins.expression;
+package com.adamheins.expression;
 
-import java.text.DecimalFormat;
+import java.math.RoundingMode;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+
+import org.apfloat.Apfloat;
+import org.apfloat.ApfloatMath;
 
 
 /**
@@ -15,29 +18,20 @@ import java.util.Queue;
  * 
  */
 public class ExpressionEvaluator {
+    
+    /** Internal precision of calculations. Presented value is one less than this. */
+    public static final int PRECISION = 21;  
 
-    /**
-     * Constant indicating the operator is left associative and takes two
-     * arguments.
-     */
+    /** Constant indicating the operator is left associative and takes two arguments. */
     private static final int BINARY_LEFT = 0;
 
-    /**
-     * Constant indicating the operator is right associative and takes two
-     * arguments.
-     */
+    /** Constant indicating the operator is right associative and takes two arguments. */
     private static final int BINARY_RIGHT = 1;
 
-    /**
-     * Constant indicating the operator is left associative and takes one
-     * argument.
-     */
+    /** Constant indicating the operator is left associative and takes one argument. */
     private static final int UNARY_LEFT = 2;
 
-    /**
-     * Constant indicating the operator is right associative and takes one
-     * argument.
-     */
+    /** Constant indicating the operator is right associative and takes one argument. */
     private static final int UNARY_RIGHT = 3;
 
     /**
@@ -66,7 +60,7 @@ public class ExpressionEvaluator {
         OPERATOR_INFO.put("%", new int[] { 1, BINARY_LEFT });
 
         // Unary negative operator.
-        OPERATOR_INFO.put("u-", new int[] { 6, UNARY_RIGHT });
+        OPERATOR_INFO.put("u-", new int[] { 2, UNARY_RIGHT });
 
         // Operators having to do with exponentiation.
         OPERATOR_INFO.put("^", new int[] { 2, BINARY_RIGHT });
@@ -106,10 +100,10 @@ public class ExpressionEvaluator {
     private final static String[] CONSTANTS = { "e", "pi" };
 
     /** Mapping of constants to their values. */
-    private final static Map<String, Double> CONSTANT_VALUES = new HashMap<String, Double>();
+    private final static Map<String, Apfloat> CONSTANT_VALUES = new HashMap<String, Apfloat>();
     static {
-        CONSTANT_VALUES.put("e", Math.E);
-        CONSTANT_VALUES.put("pi", Math.PI);
+        CONSTANT_VALUES.put("e", new Apfloat("2.718281828459045235360287471352"));
+        CONSTANT_VALUES.put("pi", new Apfloat("3.141592653589793238462643383279"));
     }
 
     
@@ -141,6 +135,8 @@ public class ExpressionEvaluator {
             // Parse the token.
             Token token = parseToken(expressionString, i);
 
+            // Special case for negatives, as they can be either unary negatives or binary
+            // subtraction signs.
             if (token.getValue().equals("-")) {
                 Token last = expressionQueue.peekLast();
                 if (last == null || last.getType() == Token.OPERATOR 
@@ -151,6 +147,8 @@ public class ExpressionEvaluator {
                     continue;
                 }
             }
+            
+            // Add token to the queue.
             expressionQueue.add(token);
             i += token.getValue().length();
         }
@@ -160,8 +158,7 @@ public class ExpressionEvaluator {
 
     
     /**
-     * Parses the next token in the <code>String</code> representing the
-     * function.
+     * Parses the next token in the <code>String</code> representing the function.
      * 
      * @param expressionString The string of math to be parsed.
      * @param i The current index in the string.
@@ -244,10 +241,8 @@ public class ExpressionEvaluator {
             if (token.getType() == Token.NUMBER || token.getType() == Token.CONSTANT) {
                 outQueue.add(token);
 
-                // Check if the next token in the queue is an operator with a
-                // unary right
-                // associativity. If so, add an extra multiplication token
-                // before it.
+                // Check if the next token in the queue is an operator with a unary right
+                // associativity. If so, add an extra multiplication token before it.
                 if (expressionQueue.size() > 0
                         && expressionQueue.peek().getType() == Token.OPERATOR
                         && OPERATOR_INFO.get(expressionQueue.peek().getValue())[1] == UNARY_RIGHT) {
@@ -255,7 +250,7 @@ public class ExpressionEvaluator {
                     pushOperator(multiplicationToken, outQueue, opStack);
                 }
 
-                // Token is a parenthesis.
+            // Token is a parenthesis.
             } else if (token.getType() == Token.PAREN) {
                 if (token.getValue().equals("(")) {
                     opStack.push(token);
@@ -265,7 +260,7 @@ public class ExpressionEvaluator {
                         outQueue.add(poppedToken);
                 }
 
-                // Token is an operator.
+            // Token is an operator.
             } else {
                 pushOperator(token, outQueue, opStack);
             }
@@ -280,9 +275,9 @@ public class ExpressionEvaluator {
 
     
     /**
-     * Pushes an operator into the operator stack in the shunting-yard
-     * algorithm. One modification was made to the standard algorithm here.
-     * Operators cannot be popped off the stack and added to the queue if they are unary.
+     * Pushes an operator into the operator stack in the shunting-yard algorithm. 
+     * One modification was made to the standard algorithm here. Operators cannot be popped off 
+     * the stack and added to the queue if they are unary.
      * 
      * @param token Operator token to be pushed.
      * @param outQueue Output queue.
@@ -292,7 +287,7 @@ public class ExpressionEvaluator {
 
         while (opStack.size() != 0
                 && !opStack.peek().getValue().equals("(")
-                && OPERATOR_INFO.get(opStack.peek().getValue())[1] < UNARY_LEFT
+                //&& OPERATOR_INFO.get(opStack.peek().getValue())[1] < UNARY_LEFT
                 && ((OPERATOR_INFO.get(token.getValue())[1] == BINARY_LEFT 
                     && OPERATOR_INFO.get(token.getValue())[0] 
                             <= OPERATOR_INFO.get(opStack.peek().getValue())[0]) 
@@ -313,56 +308,56 @@ public class ExpressionEvaluator {
      * 
      * @throws ExpressionException Throws an exception if a syntax or math error is encountered.
      */
-    public static double evaluate(String expressionString) throws ExpressionException {
+    public static String evaluate(String expressionString) throws ExpressionException {
 
         // Empty string evaluates to zero.
         if (expressionString.isEmpty())
-            return 0;
+            return "0";
 
         Queue<Token> postfixExpression = shuntingYard(parseExpression(expressionString));
-        Deque<Double> valueStack = new LinkedList<Double>();
+        Deque<Apfloat> valueStack = new LinkedList<Apfloat>();
 
         while (postfixExpression.size() > 0) {
             Token token = postfixExpression.remove();
 
             if (token.getType() == Token.NUMBER) {
-                valueStack.push(Double.parseDouble(token.getValue()));
+                valueStack.push(new Apfloat(token.getValue(), PRECISION));
             } else if (token.getType() == Token.CONSTANT) {
                 valueStack.push(CONSTANT_VALUES.get(token.getValue()));
             } else {
                 if (OPERATOR_INFO.get(token.getValue())[1] == UNARY_RIGHT
                         || OPERATOR_INFO.get(token.getValue())[1] == UNARY_LEFT) {
-                    double num = valueStack.pop();
+                    Apfloat num = valueStack.pop();
                     valueStack.push(ExpressionMath.doOperation(token, num));
                 } else {
-
-                    double rightNum = valueStack.pop();
-                    double leftNum = valueStack.pop();
+                    Apfloat rightNum = valueStack.pop();
+                    Apfloat leftNum = valueStack.pop();
                     valueStack.push(ExpressionMath.doOperation(token, leftNum, rightNum));
                 }
             }
         }
 
-        return valueStack.pop();
-    }
+        // Format the result.
+        // Scientific notation is used if the result won't otherwise fit into 20 places.
+        Apfloat result = ApfloatMath.round(valueStack.pop(), PRECISION - 1, RoundingMode.HALF_UP);
+        String prettyString = result.toString(true);
 
+        if (prettyString.length() > PRECISION + 3) {
+            String uglyString = result.toString(false);
+            return uglyString.replace('e', 'E');
+        }
+        return prettyString;
+    }
     
-    /**
-     * Format the number. Rounds the number slightly to avoid issues with
-     * floating point inaccuracy, and strips trailing zeroes.
-     * 
-     * @param number The number to be formatted.
-     * 
-     * @return A string of the number in the correct format.
-     */
-    public static String format(double number) {
-
-        DecimalFormat df;
-        if (String.valueOf(number).indexOf('E') != -1)
-            df = new DecimalFormat("0.##############E0");
-        else
-            df = new DecimalFormat("0.##############");
-        return df.format(number);
-
+    
+    public static void main(String args[]) {
+        try {
+            System.out.println(ExpressionEvaluator.evaluate("sqrt2*100"));
+            
+        } catch (ExpressionException e) {
+            System.out.println(e.getMessage());
+            
+        }
     }
+  
 }

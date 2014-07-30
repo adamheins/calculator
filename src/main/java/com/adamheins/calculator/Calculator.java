@@ -1,8 +1,8 @@
-package main.java.com.adamheins.calculator;
+package com.adamheins.calculator;
 
 
-import main.java.com.adamheins.expression.ExpressionException;
-import main.java.com.adamheins.expression.ExpressionEvaluator;
+import com.adamheins.expression.ExpressionEvaluator;
+import com.adamheins.expression.ExpressionException;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -56,6 +56,7 @@ public class Calculator extends Application {
 		// Set up the field where the result is displayed.
 		resultField = new TextField();
 		resultField.setEditable(false);	
+		resultField.setPrefWidth(300);
 		
 		// Set up the button to evaluate the entered expression.
 		evaluateButton = new Button("=");
@@ -96,8 +97,7 @@ public class Calculator extends Application {
 	 */
 	private void evaluateExpression() {
 		try {
-			double result = ExpressionEvaluator.evaluate(entryField.getText());
-			resultField.setText(ExpressionEvaluator.format(result));
+			resultField.setText(ExpressionEvaluator.evaluate(entryField.getText()));
 		} catch (ExpressionException ex) {
 			resultField.setText(ex.getMessage());
 		}

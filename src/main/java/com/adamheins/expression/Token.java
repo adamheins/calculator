@@ -11,7 +11,7 @@
  * @author Adam Heins
  */
 
-package main.java.com.adamheins.expression;
+package com.adamheins.expression;
 
 
 /**

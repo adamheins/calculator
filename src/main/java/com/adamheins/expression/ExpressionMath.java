@@ -1,7 +1,11 @@
-package main.java.com.adamheins.expression;
+package com.adamheins.expression;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.adamheins.expression.Token;
+
+import org.apfloat.Apfloat;
+import org.apfloat.ApfloatMath;
+import org.apfloat.ApfloatRuntimeException;
+import org.apfloat.ApintMath;
 
 
 /**
@@ -12,19 +16,6 @@ import java.util.Map;
  */
 public class ExpressionMath {
 
-    
-    /**
-     * Due to the nature of floating point number representations, Java
-     * incorrectly evaluates certain "round" values of trigonometric functions and a
-     * small error is introduced. This look-up table corrects that behaviour.
-     */
-    private final static Map<Double, double[]> TRIG_MAPPINGS = new HashMap<Double, double[]>();
-    static {
-        TRIG_MAPPINGS.put(0d, new double[] { 0, 1, 0 });
-        TRIG_MAPPINGS.put(Math.PI / 2, new double[] { 1, 0, Double.POSITIVE_INFINITY });
-        TRIG_MAPPINGS.put(Math.PI, new double[] { 0, -1, 0 });
-        TRIG_MAPPINGS.put(3 * Math.PI / 2, new double[] { -1, 0, Double.NEGATIVE_INFINITY });
-    }
 
     /**
      * Performs a mathematical operation that requires a single numerical input.
@@ -36,44 +27,52 @@ public class ExpressionMath {
      * 
      * @throws ExpressionException Throws an exception is a math error occurs.
      */
-    public static double doOperation(Token operator, double num) throws ExpressionException {
+    public static Apfloat doOperation(Token operator, Apfloat num) throws ExpressionException {
 
         String operatorValue = operator.getValue();
 
-        if (operatorValue.equals("ln"))
-            return Math.log(num);
-        else if (operatorValue.equals("log"))
-            return Math.log(num) / Math.log(10);
-        else if (operatorValue.equals("sin"))
-            return TRIG_MAPPINGS.containsKey(num) ? TRIG_MAPPINGS.get(num)[0] : Math.sin(num);
-        else if (operatorValue.equals("cos"))
-            return TRIG_MAPPINGS.containsKey(num) ? TRIG_MAPPINGS.get(num)[1] : Math.cos(num);
-        else if (operatorValue.equals("tan"))
-            return TRIG_MAPPINGS.containsKey(num) ? TRIG_MAPPINGS.get(num)[2] : Math.tan(num);
-        else if (operatorValue.equals("asin"))
-            return Math.asin(num);
-        else if (operatorValue.equals("acos"))
-            return Math.acos(num);
-        else if (operatorValue.equals("atan"))
-            return Math.atan(num);
-        else if (operatorValue.equals("!"))
-            return fact(num);
-        else if (operatorValue.equals("sqrt"))
-            return Math.sqrt(num);
-        else if (operatorValue.equals("r"))
-            return Math.toRadians(num);
-        else if (operatorValue.equals("d"))
-            return Math.toDegrees(num);
-        else if (operatorValue.equals("sinh"))
-            return Math.sinh(num);
-        else if (operatorValue.equals("cosh"))
-            return Math.cosh(num);
-        else if (operatorValue.equals("tanh"))
-            return Math.tanh(num);
-        else if (operatorValue.equals("u-"))
-            return -num;
-
-        throw new ExpressionException("Math error.");
+        try {
+            if (operatorValue.equals("ln"))
+                return ApfloatMath.log(num);
+            else if (operatorValue.equals("log"))
+                return ApfloatMath.log(num, new Apfloat("10"));
+            else if (operatorValue.equals("sin"))
+                return ApfloatMath.sin(num);
+            else if (operatorValue.equals("cos"))
+                return ApfloatMath.cos(num);
+            else if (operatorValue.equals("tan"))
+                return ApfloatMath.tan(num);
+            else if (operatorValue.equals("asin"))
+                return ApfloatMath.asin(num);
+            else if (operatorValue.equals("acos"))
+                return acos(num);
+            else if (operatorValue.equals("atan"))
+                return ApfloatMath.atan(num);
+            else if (operatorValue.equals("!"))
+                return factorial(num);
+            else if (operatorValue.equals("sqrt"))
+                return ApfloatMath.sqrt(num);
+            else if (operatorValue.equals("r"))
+                return ApfloatMath.toRadians(num);
+            else if (operatorValue.equals("d"))
+                return ApfloatMath.toDegrees(num);
+            else if (operatorValue.equals("sinh"))
+                return ApfloatMath.sinh(num);
+            else if (operatorValue.equals("cosh"))
+                return ApfloatMath.cosh(num);
+            else if (operatorValue.equals("tanh"))
+                return ApfloatMath.tanh(num);
+            else if (operatorValue.equals("u-"))
+                return num.negate();
+            
+            throw new ExpressionException("Math error.");
+        
+        } catch (ArithmeticException ae) {
+            throw new ExpressionException("Math error.");
+        } catch (ApfloatRuntimeException are) {
+            throw new ExpressionException("Math error.");
+        }
+        
     }
 
     
@@ -86,31 +85,38 @@ public class ExpressionMath {
      * 
      * @return The result of the mathematical operation.
      * 
-     * @throws ExpressionException
+     * @throws ExpressionException Throws an exception if a math error occurs.
      */
-    public static double doOperation(Token operator, double leftNum, double rightNum)
+    public static Apfloat doOperation(Token operator, Apfloat leftNum, Apfloat rightNum)
             throws ExpressionException {
 
         String operatorValue = operator.getValue();
 
-        if (operatorValue.equals("+"))
-            return leftNum + rightNum;
-        else if (operatorValue.equals("-"))
-            return leftNum - rightNum;
-        else if (operatorValue.equals("*"))
-            return leftNum * rightNum;
-        else if (operatorValue.equals("/"))
-            return leftNum / rightNum;
-        else if (operatorValue.equals("^"))
-            return Math.pow(leftNum, rightNum);
-        else if (operatorValue.equals("%"))
-            return leftNum % rightNum;
-        else if (operatorValue.equals("E"))
-            return leftNum * Math.pow(10, rightNum);
-        else if (operatorValue.equals("rt"))
-            return Math.pow(rightNum, 1.0 / leftNum);
-
-        throw new ExpressionException("Math error.");
+        try {
+            if (operatorValue.equals("+"))
+                return leftNum.add(rightNum);
+            else if (operatorValue.equals("-"))
+                return leftNum.subtract(rightNum);
+            else if (operatorValue.equals("*"))
+                return leftNum.multiply(rightNum);
+            else if (operatorValue.equals("/"))
+                return leftNum.divide(rightNum);
+            else if (operatorValue.equals("%"))
+                return leftNum.mod(rightNum);
+            else if (operatorValue.equals("^"))
+                return ApfloatMath.pow(leftNum, rightNum);    
+            else if (operatorValue.equals("E"))
+                return leftNum.multiply(ApfloatMath.pow(new Apfloat("10", ExpressionEvaluator.PRECISION), rightNum));
+            else if (operatorValue.equals("rt"))
+                return ApfloatMath.root(rightNum, leftNum.longValue());
+            
+            throw new ExpressionException("Math error.");
+        
+        } catch (ArithmeticException ae) {
+            throw new ExpressionException("Math error.");
+        } catch (ApfloatRuntimeException are) {
+            throw new ExpressionException("Math error.");
+        }
     }
 
     
@@ -123,16 +129,32 @@ public class ExpressionMath {
      * 
      * @throws ExpressionException Throws an exception if the number is not an integer.
      */
-    private static double fact(double num) throws ExpressionException {
+    private static Apfloat factorial(Apfloat num) throws ExpressionException {
 
-        // Ensure that the number is an integer.
-        if ((int) num != num)
+        String numStr = num.toString();
+        
+        // Check if the number is an integer.
+        if (numStr.contains("."))
             throw new ExpressionException("Math error.");
 
-        // Calculate factorial.
-        double result = 1;
-        for (int i = 2; i <= num; i++)
-            result *= i;
-        return result;
+        return new Apfloat(ApintMath.factorial(Long.parseLong(numStr)).toString());
+        
+    }
+    
+    
+    /**
+     * Computes the inverse cosine of a number.
+     * There is an error is the Apfloat library where the acos function throws an error when
+     * taking an input of 0. This function corrects that behaviour to return the correct result
+     * of 0.
+     * 
+     * @param num Number to which to apply inverse cosine function.
+     * 
+     * @return Inverse cosine of <code>num</code>.
+     */
+    private static Apfloat acos(Apfloat num) {
+        if (num.intValue() == 0)
+            return num;
+        return ApfloatMath.acos(num);
     }
 }
