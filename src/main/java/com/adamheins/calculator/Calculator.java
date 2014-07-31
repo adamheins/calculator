@@ -14,9 +14,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 /**
  * GUI for a calculator that evaluates string of math.
@@ -72,19 +72,19 @@ public class Calculator extends Application {
 		resultBox.setSpacing(10);
 		resultBox.getChildren().add(resultField);
 		resultBox.getChildren().add(evaluateButton);
+		HBox.setHgrow(resultField, Priority.ALWAYS);
 		
 		// Set up the root pane of the application.
 		VBox root = new VBox();
 		root.setSpacing(10);
-		root.setPadding(new Insets(15, 15, 15, 15));
+		root.setPadding(new Insets(12, 12, 0, 12));
 		root.getChildren().add(entryField);
 		root.getChildren().add(resultBox);
 		
-		Scene scene = new Scene(root);		
+		Scene scene = new Scene(root);
 		
 		// Set up the stage.
 		stage.setTitle("Calculator");
-		stage.initStyle(StageStyle.UTILITY);
 		stage.setResizable(false);
 		stage.setScene(scene);
 		
