@@ -12,7 +12,7 @@ import org.apfloat.ApintMath;
  * Handles math operators for the <code>ExpressionEvaluator</code> class.
  * 
  * @author Adam Heins
- *
+ * 
  */
 public class ExpressionMath {
 
@@ -53,9 +53,9 @@ public class ExpressionMath {
             else if (operatorValue.equals("sqrt"))
                 return ApfloatMath.sqrt(num);
             else if (operatorValue.equals("r"))
-                return ApfloatMath.toRadians(num);
+                return toRadians(num);
             else if (operatorValue.equals("d"))
-                return ApfloatMath.toDegrees(num);
+                return toDegrees(num);
             else if (operatorValue.equals("sinh"))
                 return ApfloatMath.sinh(num);
             else if (operatorValue.equals("cosh"))
@@ -70,6 +70,7 @@ public class ExpressionMath {
         } catch (ArithmeticException ae) {
             throw new ExpressionException("Math error.");
         } catch (ApfloatRuntimeException are) {
+            are.printStackTrace();
             throw new ExpressionException("Math error.");
         }
         
@@ -106,7 +107,7 @@ public class ExpressionMath {
             else if (operatorValue.equals("^"))
                 return ApfloatMath.pow(leftNum, rightNum);    
             else if (operatorValue.equals("E"))
-                return leftNum.multiply(ApfloatMath.pow(new Apfloat("10", ExpressionEvaluator.PRECISION), rightNum));
+                return ApfloatMath.scale(leftNum, rightNum.longValue());
             else if (operatorValue.equals("rt"))
                 return ApfloatMath.root(rightNum, leftNum.longValue());
             
@@ -156,5 +157,33 @@ public class ExpressionMath {
         if (num.intValue() == 0)
             return num;
         return ApfloatMath.acos(num);
+    }
+    
+    
+    /**
+     * Converts radians to degrees.
+     * 
+     * @param num Value in radians.
+     * 
+     * @return Equivalent value in degrees.
+     */
+    private static Apfloat toDegrees(Apfloat num) {
+        if (num.intValue() == 0)
+            return num;
+        return ApfloatMath.toDegrees(num);
+    }
+    
+    
+    /**
+     * Converts degrees to radians.
+     * 
+     * @param num Value in degrees.
+     * 
+     * @return Equivalent value in radians.
+     */
+    private static Apfloat toRadians(Apfloat num) {
+        if (num.intValue() == 0)
+            return num;
+        return ApfloatMath.toRadians(num);
     }
 }
