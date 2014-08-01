@@ -164,12 +164,24 @@ public class ExpressionTests {
     public void testToDegrees() throws ExpressionException {
         assertEquals("180", ExpressionEvaluator.evaluate("dpi"));
     }
+    
+    
+    @Test
+    public void testToDegreesWithZero() throws ExpressionException {
+        assertEquals("0", ExpressionEvaluator.evaluate("d0"));
+    }
 
 
     @Test
     public void testToRadians() throws ExpressionException {
         assertEquals("1.5707963267948966192",
                 ExpressionEvaluator.evaluate("r90"));
+    }
+    
+    
+    @Test
+    public void testToRadiansWithZero() throws ExpressionException {
+        assertEquals("0", ExpressionEvaluator.evaluate("r0"));
     }
 
 
@@ -297,5 +309,35 @@ public class ExpressionTests {
     public void testResultHasNoScientificNotation() throws ExpressionException {
         assertEquals("314.15926535897932385",
                 ExpressionEvaluator.evaluate("pi*100"));
+    }
+    
+    
+    @Test
+    public void testBracketsNoOperators() throws ExpressionException {
+        assertEquals("3", ExpressionEvaluator.evaluate("(3)"));
+    }
+    
+    
+    @Test
+    public void testBracketsWithSimpleOperators() throws ExpressionException {
+        assertEquals("18", ExpressionEvaluator.evaluate("(5+4)*2"));
+    }
+    
+    
+    @Test
+    public void testBracketsWithUnaryNegative() throws ExpressionException {
+        assertEquals("-4", ExpressionEvaluator.evaluate("-(2+2)"));
+    }
+    
+    
+    @Test
+    public void testInversionDegreesToRadiansToDegrees() throws ExpressionException {
+        assertEquals("90", ExpressionEvaluator.evaluate("dr90"));
+    }
+    
+    
+    @Test
+    public void testInversionWithTrigOperators() throws ExpressionException {
+        assertEquals("0", ExpressionEvaluator.evaluate("asinsinpi"));
     }
 }
