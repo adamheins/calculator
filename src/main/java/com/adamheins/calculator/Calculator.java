@@ -11,6 +11,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -55,6 +56,7 @@ public class Calculator extends Application {
 		
 		// Set up the field where the result is displayed.
 		resultField = new TextField();
+		resultField.setPromptText("Answer appears here.");
 		resultField.setEditable(false);	
 		resultField.setPrefWidth(300);
 		
@@ -85,6 +87,7 @@ public class Calculator extends Application {
 		
 		// Set up the stage.
 		stage.setTitle("Calculator");
+		stage.getIcons().add(new Image("calc-icon.png"));
 		stage.setResizable(false);
 		stage.setScene(scene);
 		

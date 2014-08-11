@@ -352,12 +352,13 @@ public class ExpressionEvaluator {
     
     public static void main(String args[]) {
         try {
-            System.out.println(ExpressionEvaluator.evaluate("sqrt2*100"));
+            System.out.println(ExpressionEvaluator.evaluate("100E100"));
             
         } catch (ExpressionException e) {
             System.out.println(e.getMessage());
             
         }
+       // System.out.println(ApfloatMath.toRadians(new Apfloat("0.0000001", 20)));
     }
   
 }
