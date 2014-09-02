@@ -1,9 +1,6 @@
 package com.adamheins.calculator;
 
 
-import com.adamheins.expression.ExpressionEvaluator;
-import com.adamheins.expression.ExpressionException;
-
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -19,6 +16,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import com.adamheins.expression.ExpressionEvaluator;
+import com.adamheins.expression.ExpressionException;
+
 /**
  * GUI for a calculator that evaluates string of math.
  * 
@@ -27,14 +27,14 @@ import javafx.stage.Stage;
  */
 public class Calculator extends Application {
 
-	/** Field where mathematical expressions are entered. */
-	TextField entryField;
+	// Field where mathematical expressions are entered.
+	private TextField entryField;
 	
-	/** Field where the result of the expression is printed. */
-	TextField resultField;
+	// Field where the result of the expression is printed.
+	private TextField resultField;
 	
-	/** Button to evaluate the entered expression. */
-	Button evaluateButton;
+	// Button to evaluate the entered expression.
+	private Button evaluateButton;
 	
 
 	/**

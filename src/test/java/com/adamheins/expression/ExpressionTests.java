@@ -307,8 +307,7 @@ public class ExpressionTests {
 
     @Test
     public void testResultHasNoScientificNotation() throws ExpressionException {
-        assertEquals("314.15926535897932385",
-                ExpressionEvaluator.evaluate("pi*100"));
+        assertEquals("314.15926535897932385", ExpressionEvaluator.evaluate("pi*100"));
     }
     
     
@@ -339,5 +338,17 @@ public class ExpressionTests {
     @Test
     public void testInversionWithTrigOperators() throws ExpressionException {
         assertEquals("0", ExpressionEvaluator.evaluate("asinsinpi"));
+    }
+    
+    
+    @Test
+    public void testImplicitMultiplication() throws ExpressionException {
+        assertEquals("2", ExpressionEvaluator.evaluate("2sinr90"));
+    }
+    
+    
+    @Test
+    public void testImplicitMultiplication2() throws ExpressionException {
+        assertEquals("6", ExpressionEvaluator.evaluate("2log1000"));
     }
 }
